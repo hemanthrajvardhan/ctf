@@ -10,7 +10,11 @@ use Api\Middleware\AdminMiddleware;
 
 session_start();
 
-header('Access-Control-Allow-Origin: http://localhost:5000');
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $origin) || 
+    preg_match('/\.replit\.dev$/', $origin)) {
+    header("Access-Control-Allow-Origin: $origin");
+}
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');

@@ -4,68 +4,56 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import mossLogo from "@/assets/moss-logo.png";
 import { Loader2 } from "lucide-react";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/challenges');
-      }
-    });
+    fetch('http://localhost:3000/api/session', {
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          navigate('/challenges');
+        }
+      })
+      .catch(() => {});
   }, [navigate]);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-        if (error) throw error;
+      const data = await response.json();
 
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in.",
-        });
-
-        navigate('/challenges');
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/challenges`,
-            data: {
-              name: name,
-            },
-          },
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Account created!",
-          description: "You can now sign in with your credentials.",
-        });
-
-        setIsLogin(true);
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
       }
+
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully signed in.",
+      });
+
+      navigate('/challenges');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -90,29 +78,17 @@ const Auth = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={!isLogin}
-                />
-              </div>
-            )}
+          <form onSubmit={handleLogin} className="space-y-4" data-testid="form-login">
             <div className="space-y-2">
-              <Label htmlFor="email">Campus Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@campus.edu"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                data-testid="input-email"
               />
             </div>
             <div className="space-y-2">
@@ -124,20 +100,16 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                data-testid="input-password"
               />
             </div>
-            <Button type="submit" className="w-full shadow-glow-moss" disabled={loading}>
+            <Button type="submit" className="w-full shadow-glow-moss" disabled={loading} data-testid="button-login">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLogin ? 'Sign In' : 'Sign Up'}
+              Sign In
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-            </Button>
+            <p className="text-sm text-center text-muted-foreground">
+              Contact admin for account creation
+            </p>
           </form>
         </CardContent>
       </Card>

@@ -9,10 +9,33 @@ class Database
 
     private function __construct()
     {
-        $dsn = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
+        $databaseUrl = $_ENV['DATABASE_URL'] ?? getenv('DATABASE_URL');
+        
+        if (!$databaseUrl) {
+            throw new \Exception("DATABASE_URL environment variable not set");
+        }
+        
+        $parsedUrl = parse_url($databaseUrl);
+        
+        if ($parsedUrl === false || !isset($parsedUrl['host'])) {
+            throw new \Exception("Invalid DATABASE_URL format");
+        }
+        
+        $host = $parsedUrl['host'];
+        $port = $parsedUrl['port'] ?? 5432;
+        $dbname = ltrim($parsedUrl['path'] ?? '', '/');
+        $user = $parsedUrl['user'] ?? '';
+        $password = $parsedUrl['pass'] ?? '';
+        
+        $dsn = sprintf(
+            "pgsql:host=%s;port=%d;dbname=%s",
+            $host,
+            $port,
+            $dbname
+        );
         
         try {
-            $this->conn = new \PDO($dsn);
+            $this->conn = new \PDO($dsn, $user, $password);
             $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
