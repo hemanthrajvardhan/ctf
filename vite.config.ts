@@ -10,6 +10,12 @@ export default defineConfig(({ mode }) => ({
     port: 5000,
     strictPort: true,
     allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: "0.0.0.0",
@@ -20,6 +26,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@assets": path.resolve(__dirname, "./attached_assets"),
     },
   },
 }));

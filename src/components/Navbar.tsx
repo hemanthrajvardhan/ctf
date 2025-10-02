@@ -15,7 +15,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/session', {
+    fetch('/api/session', {
       credentials: 'include',
     })
       .then(res => res.json())
@@ -29,7 +29,7 @@ export const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:3000/api/auth/logout', {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
