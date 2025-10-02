@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import mossLogo from "@/assets/moss-logo.png";
-import { Loader2 } from "lucide-react";
+import { Loader2, Code2 } from "lucide-react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -70,11 +69,13 @@ const Auth = () => {
       <Card className="w-full max-w-md border-border shadow-glow-moss">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <img src={mossLogo} alt="MOSS" className="h-20 w-20" />
+            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Code2 className="h-12 w-12 text-primary" />
+            </div>
           </div>
           <div className="text-center space-y-2">
-            <CardTitle className="text-2xl">MOSS CONVERGE</CardTitle>
-            <CardDescription className="text-cipher-red">OpenCipher CTF Platform</CardDescription>
+            <CardTitle className="text-2xl">CONVERGE PRESENTS</CardTitle>
+            <CardDescription className="text-cipher-red text-lg font-semibold">OpenCipher</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
