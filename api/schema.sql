@@ -59,6 +59,15 @@ CREATE TABLE submissions (
     FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE
 );
 
+-- Categories table for dynamic challenge categories and difficulty levels
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    type VARCHAR(50) DEFAULT 'category' CHECK (type IN ('category', 'difficulty')),
+    color VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for performance
 CREATE INDEX idx_submissions_user ON submissions(user_id);
 CREATE INDEX idx_submissions_challenge ON submissions(challenge_id);
@@ -69,11 +78,29 @@ CREATE INDEX idx_challenges_slug ON challenges(slug);
 CREATE INDEX idx_challenges_visible ON challenges(is_visible);
 CREATE INDEX idx_challenges_round ON challenges(round);
 CREATE INDEX idx_hints_challenge ON hints(challenge_id);
+CREATE INDEX idx_categories_type ON categories(type);
 
 -- Create default admin user
 -- Password: admin123 (hashed with bcrypt)
 INSERT INTO users (email, name, password_hash, role, is_banned) VALUES 
 ('admin@ctf.local', 'Admin User', '$2y$10$/XqyicevePLG8tDC/JTlpuB7nvY73dtmenQm47Tkz2RcGfCQaOaVO', 'admin', FALSE);
+
+-- Insert default categories
+INSERT INTO categories (name, type, color) VALUES
+('Cryptography', 'category', 'primary'),
+('Cyber Security', 'category', 'accent'),
+('Programming', 'category', 'orange'),
+('Git & Version Control', 'category', 'purple'),
+('Forensics', 'category', 'blue'),
+('Web', 'category', 'green'),
+('Reverse Engineering', 'category', 'red'),
+('Miscellaneous', 'category', 'muted');
+
+-- Insert difficulty levels
+INSERT INTO categories (name, type, color) VALUES
+('Easy', 'difficulty', 'green'),
+('Medium', 'difficulty', 'orange'),
+('Hard', 'difficulty', 'red');
 
 -- Sample challenges for testing (optional - can be removed for production)
 -- Uncomment below to add sample challenges
