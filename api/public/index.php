@@ -1,5 +1,9 @@
 <?php
 
+// Suppress warnings and notices that break JSON responses
+error_reporting(E_ERROR | E_PARSE);
+ini_set('display_errors', '0');
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Slim\Factory\AppFactory;
@@ -8,7 +12,10 @@ use Api\Services\AuthService;
 use Api\Middleware\AuthMiddleware;
 use Api\Middleware\AdminMiddleware;
 
-session_start();
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $origin) || 
