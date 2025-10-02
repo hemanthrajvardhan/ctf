@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, CheckCircle2, Target } from "lucide-react";
@@ -20,81 +19,118 @@ interface UserProfile {
 
 const Profile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    checkAuth();
+  }, [navigate]);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/session', {
+        credentials: 'include',
+      });
+      const data = await response.json();
+
+      if (!data.user) {
         navigate('/auth');
         return;
       }
-      setUser(session.user);
-      loadProfile(session.user.id);
-    });
-  }, [navigate]);
 
-  const loadProfile = async (userId: string) => {
-    // Get user profile
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('name, email')
-      .eq('id', userId)
-      .single();
-
-    if (!profileData) return;
-
-    // Get user solves
-    const { data: solvesData } = await supabase
-      .from('solves')
-      .select(`
-        points_awarded,
-        solved_at,
-        challenges (
-          title
-        )
-      `)
-      .eq('user_id', userId)
-      .order('solved_at', { ascending: false })
-      .limit(5);
-
-    const totalScore = solvesData?.reduce((sum, solve) => sum + solve.points_awarded, 0) || 0;
-
-    // Get user rank
-    const { data: allScores } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        solves (
-          points_awarded
-        )
-      `);
-
-    const scores = (allScores || [])
-      .map((p: any) => ({
-        id: p.id,
-        score: p.solves.reduce((sum: number, s: any) => sum + s.points_awarded, 0),
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    const rank = scores.findIndex(s => s.id === userId) + 1;
-
-    setProfile({
-      name: profileData.name,
-      email: profileData.email,
-      total_score: totalScore,
-      solved_count: solvesData?.length || 0,
-      rank: rank,
-      recent_solves: (solvesData || []).map((solve: any) => ({
-        challenge_title: solve.challenges.title,
-        points: solve.points_awarded,
-        solved_at: solve.solved_at,
-      })),
-    });
+      loadProfile(data.user.id);
+    } catch (error) {
+      navigate('/auth');
+    }
   };
 
+  const loadProfile = async (userId: number) => {
+    try {
+      // Get user info
+      const userResponse = await fetch('/api/session', {
+        credentials: 'include',
+      });
+      const userData = await userResponse.json();
+
+      // Get user submissions
+      const submissionsResponse = await fetch(`/api/users/${userId}/submissions`, {
+        credentials: 'include',
+      });
+      const submissionsData = await submissionsResponse.json();
+
+      // Get all challenges to calculate points
+      const challengesResponse = await fetch('/api/challenges', {
+        credentials: 'include',
+      });
+      const challengesData = await challengesResponse.json();
+
+      // Get leaderboard to calculate rank
+      const leaderboardResponse = await fetch('/api/leaderboard', {
+        credentials: 'include',
+      });
+      const leaderboardData = await leaderboardResponse.json();
+
+      // Calculate stats
+      const correctSubmissions = submissionsData.filter((s: any) => s.is_correct);
+      const uniqueSolves: any[] = Array.from(
+        new Map(correctSubmissions.map((s: any) => [s.challenge_id, s])).values()
+      );
+
+      const totalScore: number = uniqueSolves.reduce((sum: number, sub: any) => {
+        const challenge = challengesData.find((c: any) => c.id === sub.challenge_id);
+        return sum + (challenge?.points || 0);
+      }, 0);
+
+      const rank = leaderboardData.findIndex((entry: any) => entry.user_id === userId) + 1;
+
+      // Get recent solves with challenge titles
+      const recentSolves = uniqueSolves
+        .sort((a: any, b: any) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
+        .slice(0, 5)
+        .map((sub: any) => {
+          const challenge = challengesData.find((c: any) => c.id === sub.challenge_id);
+          return {
+            challenge_title: challenge?.title || 'Unknown Challenge',
+            points: challenge?.points || 0,
+            solved_at: sub.submitted_at,
+          };
+        });
+
+      setProfile({
+        name: userData.user.name,
+        email: userData.user.email,
+        total_score: totalScore,
+        solved_count: uniqueSolves.length,
+        rank: rank || 0,
+        recent_solves: recentSolves,
+      });
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-dark">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) {
-    return <div className="min-h-screen bg-gradient-dark"><Navbar /></div>;
+    return (
+      <div className="min-h-screen bg-gradient-dark">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <p className="text-muted-foreground">Unable to load profile.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -113,7 +149,9 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-primary">{profile.total_score}</div>
+              <div className="text-4xl font-bold text-primary" data-testid="profile-score">
+                {profile.total_score}
+              </div>
             </CardContent>
           </Card>
 
@@ -125,7 +163,9 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-accent">{profile.solved_count}</div>
+              <div className="text-4xl font-bold text-accent" data-testid="profile-solved">
+                {profile.solved_count}
+              </div>
             </CardContent>
           </Card>
 
@@ -137,7 +177,9 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-foreground">#{profile.rank}</div>
+              <div className="text-4xl font-bold text-foreground" data-testid="profile-rank">
+                {profile.rank > 0 ? `#${profile.rank}` : 'Unranked'}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -157,6 +199,7 @@ const Profile = () => {
                   <div
                     key={idx}
                     className="flex items-center justify-between p-4 bg-muted/20 rounded-lg border border-border"
+                    data-testid={`recent-solve-${idx}`}
                   >
                     <div className="flex items-center gap-3">
                       <CheckCircle2 className="h-5 w-5 text-primary" />

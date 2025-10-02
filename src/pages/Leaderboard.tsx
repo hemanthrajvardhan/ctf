@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Medal, Award } from "lucide-react";
 
 interface LeaderboardEntry {
-  user_id: string;
+  user_id: number;
   name: string;
   email: string;
   total_score: number;
@@ -14,53 +13,27 @@ interface LeaderboardEntry {
 
 const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadLeaderboard();
-
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel('leaderboard-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'solves' }, () => {
-        loadLeaderboard();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const loadLeaderboard = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        name,
-        email,
-        solves (
-          points_awarded
-        )
-      `);
-
-    if (error) {
+    try {
+      const response = await fetch('/api/leaderboard', {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data || []);
+      }
+    } catch (error) {
       console.error('Error loading leaderboard:', error);
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // Calculate scores
-    const leaderboardData = data
-      .map((profile: any) => ({
-        user_id: profile.id,
-        name: profile.name,
-        email: profile.email,
-        total_score: profile.solves.reduce((sum: number, solve: any) => sum + solve.points_awarded, 0),
-        solved_count: profile.solves.length,
-      }))
-      .filter((entry: LeaderboardEntry) => entry.solved_count > 0)
-      .sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.total_score - a.total_score);
-
-    setLeaderboard(leaderboardData);
   };
 
   const getRankIcon = (rank: number) => {
@@ -88,6 +61,17 @@ const Leaderboard = () => {
         return "";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-dark">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <p className="text-muted-foreground">Loading leaderboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-dark">
@@ -126,24 +110,29 @@ const Leaderboard = () => {
                         <tr
                           key={entry.user_id}
                           className={`border-b border-border transition-colors hover:bg-muted/10 ${getRowClass(rank)}`}
+                          data-testid={`leaderboard-row-${rank}`}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               {getRankIcon(rank)}
-                              <span className="text-2xl font-bold">{rank}</span>
+                              <span className="text-2xl font-bold" data-testid={`rank-${rank}`}>{rank}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div>
-                              <div className="font-semibold">{entry.name}</div>
+                              <div className="font-semibold" data-testid={`name-${rank}`}>{entry.name}</div>
                               <div className="text-sm text-muted-foreground">{entry.email}</div>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <span className="text-lg font-semibold text-primary">{entry.solved_count}</span>
+                            <span className="text-lg font-semibold text-primary" data-testid={`solved-${rank}`}>
+                              {entry.solved_count}
+                            </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <span className="text-2xl font-bold text-cipher-red">{entry.total_score}</span>
+                            <span className="text-2xl font-bold text-cipher-red" data-testid={`score-${rank}`}>
+                              {entry.total_score}
+                            </span>
                           </td>
                         </tr>
                       );

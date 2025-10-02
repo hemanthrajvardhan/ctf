@@ -221,6 +221,12 @@ $app->get('/api/submissions', function ($request, $response) use ($submissionSer
     return $response->withHeader('Content-Type', 'application/json');
 })->add(new AuthMiddleware());
 
+$app->get('/api/users/{id}/submissions', function ($request, $response, $args) use ($submissionService) {
+    $submissions = $submissionService->getUserSubmissions($args['id']);
+    $response->getBody()->write(json_encode($submissions));
+    return $response->withHeader('Content-Type', 'application/json');
+})->add(new AuthMiddleware());
+
 $app->get('/api/submissions/solved', function ($request, $response) use ($submissionService) {
     $userId = $request->getAttribute('user_id');
     $solved = $submissionService->getUserSolvedChallenges($userId);
