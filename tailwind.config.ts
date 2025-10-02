@@ -57,6 +57,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        moss: {
+          DEFAULT: "hsl(var(--moss-glow))",
+        },
+        cipher: {
+          red: "hsl(var(--cipher-red))",
+          orange: "hsl(var(--cipher-orange))",
+        },
+      },
+      backgroundImage: {
+        'gradient-moss': 'var(--gradient-moss)',
+        'gradient-cipher': 'var(--gradient-cipher)',
+        'gradient-dark': 'var(--gradient-dark)',
+      },
+      boxShadow: {
+        'glow-moss': 'var(--glow-moss)',
+        'glow-cipher': 'var(--glow-cipher)',
       },
       borderRadius: {
         lg: "var(--radius)",
