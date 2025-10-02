@@ -48,7 +48,19 @@ class AuthService
 
     public function getAllUsers()
     {
-        $stmt = $this->db->query("SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC");
+        $stmt = $this->db->query("SELECT id, email, name, role, is_banned, created_at FROM users ORDER BY created_at DESC");
         return $stmt->fetchAll();
+    }
+
+    public function banUser($id)
+    {
+        $stmt = $this->db->prepare("UPDATE users SET is_banned = true WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
+    public function unbanUser($id)
+    {
+        $stmt = $this->db->prepare("UPDATE users SET is_banned = false WHERE id = ?");
+        return $stmt->execute([$id]);
     }
 }

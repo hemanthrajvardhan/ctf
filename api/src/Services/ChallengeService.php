@@ -13,46 +13,52 @@ class ChallengeService
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function getAllChallenges()
+    public function getAllChallenges($includeHidden = false)
     {
-        $stmt = $this->db->query("SELECT id, title, slug, description, category, points, created_at FROM challenges ORDER BY points ASC");
+        $query = "SELECT id, title, slug, description, category, points, is_visible, round, image_url, external_link, created_at FROM challenges";
+        if (!$includeHidden) {
+            $query .= " WHERE is_visible = true";
+        }
+        $query .= " ORDER BY points ASC";
+        
+        $stmt = $this->db->query($query);
         return $stmt->fetchAll();
     }
 
     public function getChallengeBySlug($slug)
     {
-        $stmt = $this->db->prepare("SELECT id, title, slug, description, category, points, created_at FROM challenges WHERE slug = ?");
+        $stmt = $this->db->prepare("SELECT id, title, slug, description, category, points, is_visible, round, image_url, external_link, created_at FROM challenges WHERE slug = ?");
         $stmt->execute([$slug]);
         return $stmt->fetch();
     }
 
-    public function createChallenge($title, $slug, $description, $category, $points, $flag)
+    public function createChallenge($title, $slug, $description, $category, $points, $flag, $round = null, $imageUrl = null, $externalLink = null, $isVisible = true)
     {
         $flagHash = password_hash($flag, PASSWORD_BCRYPT);
         
         $stmt = $this->db->prepare(
-            "INSERT INTO challenges (title, slug, description, category, points, flag_hash) 
-             VALUES (?, ?, ?, ?, ?, ?) 
-             RETURNING id, title, slug, description, category, points, created_at"
+            "INSERT INTO challenges (title, slug, description, category, points, flag_hash, round, image_url, external_link, is_visible) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+             RETURNING id, title, slug, description, category, points, round, image_url, external_link, is_visible, created_at"
         );
-        $stmt->execute([$title, $slug, $description, $category, $points, $flagHash]);
+        $stmt->execute([$title, $slug, $description, $category, $points, $flagHash, $round, $imageUrl, $externalLink, $isVisible ? 't' : 'f']);
         
         return $stmt->fetch();
     }
 
-    public function updateChallenge($id, $title, $slug, $description, $category, $points, $flag = null)
+    public function updateChallenge($id, $title, $slug, $description, $category, $points, $flag = null, $round = null, $imageUrl = null, $externalLink = null, $isVisible = true)
     {
         if ($flag) {
             $flagHash = password_hash($flag, PASSWORD_BCRYPT);
             $stmt = $this->db->prepare(
-                "UPDATE challenges SET title = ?, slug = ?, description = ?, category = ?, points = ?, flag_hash = ? WHERE id = ?"
+                "UPDATE challenges SET title = ?, slug = ?, description = ?, category = ?, points = ?, flag_hash = ?, round = ?, image_url = ?, external_link = ?, is_visible = ? WHERE id = ?"
             );
-            $stmt->execute([$title, $slug, $description, $category, $points, $flagHash, $id]);
+            $stmt->execute([$title, $slug, $description, $category, $points, $flagHash, $round, $imageUrl, $externalLink, $isVisible ? 't' : 'f', $id]);
         } else {
             $stmt = $this->db->prepare(
-                "UPDATE challenges SET title = ?, slug = ?, description = ?, category = ?, points = ? WHERE id = ?"
+                "UPDATE challenges SET title = ?, slug = ?, description = ?, category = ?, points = ?, round = ?, image_url = ?, external_link = ?, is_visible = ? WHERE id = ?"
             );
-            $stmt->execute([$title, $slug, $description, $category, $points, $id]);
+            $stmt->execute([$title, $slug, $description, $category, $points, $round, $imageUrl, $externalLink, $isVisible ? 't' : 'f', $id]);
         }
         
         return $this->getChallengeBySlug($slug);

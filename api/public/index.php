@@ -111,9 +111,24 @@ $app->get('/api/health', function ($request, $response) {
 
 $challengeService = new \Api\Services\ChallengeService();
 $submissionService = new \Api\Services\SubmissionService();
+$hintService = new \Api\Services\HintService();
+
+$app->post('/api/users/{id}/ban', function ($request, $response, $args) use ($authService) {
+    $authService->banUser($args['id']);
+    $response->getBody()->write(json_encode(['message' => 'User banned successfully']));
+    return $response->withHeader('Content-Type', 'application/json');
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
+
+$app->post('/api/users/{id}/unban', function ($request, $response, $args) use ($authService) {
+    $authService->unbanUser($args['id']);
+    $response->getBody()->write(json_encode(['message' => 'User unbanned successfully']));
+    return $response->withHeader('Content-Type', 'application/json');
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
 
 $app->get('/api/challenges', function ($request, $response) use ($challengeService) {
-    $challenges = $challengeService->getAllChallenges();
+    $userRole = $request->getAttribute('user_role');
+    $includeHidden = ($userRole === 'admin');
+    $challenges = $challengeService->getAllChallenges($includeHidden);
     $response->getBody()->write(json_encode($challenges));
     return $response->withHeader('Content-Type', 'application/json');
 });
@@ -137,7 +152,11 @@ $app->post('/api/challenges', function ($request, $response) use ($challengeServ
             $data['description'],
             $data['category'],
             $data['points'],
-            $data['flag']
+            $data['flag'],
+            $data['round'] ?? null,
+            $data['image_url'] ?? null,
+            $data['external_link'] ?? null,
+            $data['is_visible'] ?? true
         );
         $response->getBody()->write(json_encode($challenge));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
@@ -157,7 +176,11 @@ $app->patch('/api/challenges/{id}', function ($request, $response, $args) use ($
             $data['description'],
             $data['category'],
             $data['points'],
-            $data['flag'] ?? null
+            $data['flag'] ?? null,
+            $data['round'] ?? null,
+            $data['image_url'] ?? null,
+            $data['external_link'] ?? null,
+            $data['is_visible'] ?? true
         );
         $response->getBody()->write(json_encode($challenge));
         return $response->withHeader('Content-Type', 'application/json');
@@ -210,5 +233,53 @@ $app->get('/api/leaderboard', function ($request, $response) use ($submissionSer
     $response->getBody()->write(json_encode($leaderboard));
     return $response->withHeader('Content-Type', 'application/json');
 });
+
+$app->get('/api/challenges/{id}/hints', function ($request, $response, $args) use ($hintService) {
+    $hints = $hintService->getHintsForChallenge($args['id']);
+    $response->getBody()->write(json_encode($hints));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+$app->post('/api/challenges/{id}/hints', function ($request, $response, $args) use ($hintService) {
+    $data = $request->getParsedBody();
+    try {
+        $hint = $hintService->createHint(
+            $args['id'],
+            $data['content'],
+            $data['cost'] ?? 0,
+            $data['unlock_time'] ?? 0,
+            $data['position'] ?? 0
+        );
+        $response->getBody()->write(json_encode($hint));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
+
+$app->patch('/api/hints/{id}', function ($request, $response, $args) use ($hintService) {
+    $data = $request->getParsedBody();
+    try {
+        $hintService->updateHint(
+            $args['id'],
+            $data['content'],
+            $data['cost'],
+            $data['unlock_time'],
+            $data['position']
+        );
+        $response->getBody()->write(json_encode(['message' => 'Hint updated successfully']));
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
+
+$app->delete('/api/hints/{id}', function ($request, $response, $args) use ($hintService) {
+    $hintService->deleteHint($args['id']);
+    $response->getBody()->write(json_encode(['message' => 'Hint deleted successfully']));
+    return $response->withHeader('Content-Type', 'application/json');
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
 
 $app->run();
