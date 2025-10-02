@@ -112,6 +112,7 @@ $app->get('/api/health', function ($request, $response) {
 $challengeService = new \Api\Services\ChallengeService();
 $submissionService = new \Api\Services\SubmissionService();
 $hintService = new \Api\Services\HintService();
+$categoryService = new \Api\Services\CategoryService();
 
 $app->post('/api/users/{id}/ban', function ($request, $response, $args) use ($authService) {
     $authService->banUser($args['id']);
@@ -285,6 +286,40 @@ $app->patch('/api/hints/{id}', function ($request, $response, $args) use ($hintS
 $app->delete('/api/hints/{id}', function ($request, $response, $args) use ($hintService) {
     $hintService->deleteHint($args['id']);
     $response->getBody()->write(json_encode(['message' => 'Hint deleted successfully']));
+    return $response->withHeader('Content-Type', 'application/json');
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
+
+$app->get('/api/categories', function ($request, $response) use ($categoryService) {
+    $categories = $categoryService->getAllCategories();
+    $response->getBody()->write(json_encode($categories));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+$app->get('/api/categories/{type}', function ($request, $response, $args) use ($categoryService) {
+    $categories = $categoryService->getCategoriesByType($args['type']);
+    $response->getBody()->write(json_encode($categories));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+$app->post('/api/categories', function ($request, $response) use ($categoryService) {
+    $data = $request->getParsedBody();
+    try {
+        $category = $categoryService->createCategory(
+            $data['name'],
+            $data['type'] ?? 'category',
+            $data['color'] ?? null
+        );
+        $response->getBody()->write(json_encode($category));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+})->add(new AdminMiddleware())->add(new AuthMiddleware());
+
+$app->delete('/api/categories/{id}', function ($request, $response, $args) use ($categoryService) {
+    $categoryService->deleteCategory($args['id']);
+    $response->getBody()->write(json_encode(['message' => 'Category deleted successfully']));
     return $response->withHeader('Content-Type', 'application/json');
 })->add(new AdminMiddleware())->add(new AuthMiddleware());
 

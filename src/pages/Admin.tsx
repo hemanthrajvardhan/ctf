@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit, Users, Trophy, X, Ban, Check } from "lucide-react";
+import { Plus, Trash2, Edit, Users, Trophy, X, Ban, Check, Tag } from "lucide-react";
 
 interface User {
   id: number;
@@ -39,13 +39,22 @@ interface Hint {
   position: number;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  type: string;
+  color: string | null;
+}
+
 const Admin = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedChallengeHints, setSelectedChallengeHints] = useState<Hint[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUserForm, setShowUserForm] = useState(false);
   const [showChallengeForm, setShowChallengeForm] = useState(false);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingChallengeId, setEditingChallengeId] = useState<number | null>(null);
   const [managingHintsFor, setManagingHintsFor] = useState<number | null>(null);
   
@@ -76,6 +85,12 @@ const Admin = () => {
     position: 0,
   });
 
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    type: 'category',
+    color: '',
+  });
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -103,6 +118,7 @@ const Admin = () => {
         setIsAdmin(true);
         loadUsers();
         loadChallenges();
+        loadCategories();
       })
       .catch(() => {
         navigate('/auth');
@@ -130,6 +146,18 @@ const Admin = () => {
       setChallenges(data);
     } catch (error) {
       console.error('Error loading challenges:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('/api/categories', {
+        credentials: 'include',
+      });
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -326,6 +354,52 @@ const Admin = () => {
       loadHints(managingHintsFor);
     } catch (error: any) {
       toast({ title: "Error deleting hint", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(categoryFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create category');
+      }
+
+      toast({ title: "Category created successfully!" });
+      setShowCategoryForm(false);
+      setCategoryFormData({ name: '', type: 'category', color: '' });
+      loadCategories();
+    } catch (error: any) {
+      toast({ title: "Error creating category", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this category? Challenges using this category may be affected.')) return;
+
+    try {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete category');
+      }
+
+      toast({ title: "Category deleted successfully!" });
+      loadCategories();
+    } catch (error: any) {
+      toast({ title: "Error deleting category", description: error.message, variant: "destructive" });
     }
   };
 
