@@ -2,6 +2,10 @@
 
 # Deploy script for production - starts both PHP backend and serves frontend
 
+# Build the frontend first
+echo "Building frontend..."
+npm run build
+
 # Start PHP backend on port 3000
 echo "Starting PHP backend on port 3000..."
 php -S 0.0.0.0:3000 -t api/public &
