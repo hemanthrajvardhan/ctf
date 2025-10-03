@@ -105,6 +105,8 @@ A two-round open-source Capture The Flag (CTF) event platform called "CONVERGE P
 - Session configuration in `api/public/index.php`
 
 ### Running the Application
+
+**Development:**
 ```bash
 ./start.sh
 ```
@@ -113,8 +115,14 @@ This starts both:
 - PHP built-in server on port 3000 (backend)
 - Vite dev server on port 5000 (frontend with proxy)
 
+**Production Deployment:**
+The app uses Replit's VM deployment type which supports running multiple background processes simultaneously. The deployment automatically:
+- Initializes the production database with schema and admin user
+- Starts PHP backend on port 3000
+- Starts Vite preview server on port 5000 with proxy to backend
+
 ### Vite Proxy Configuration
-Vite is configured to proxy all `/api` requests to the PHP backend on port 3000, allowing seamless API communication without CORS issues.
+Vite is configured to proxy all `/api` requests to the PHP backend on port 3000 in both development and production, allowing seamless API communication without CORS issues.
 
 ## Event Structure
 
