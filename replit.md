@@ -124,8 +124,11 @@ Git-based puzzle solving challenges where participants navigate through cryptic 
 ### Round 2: The Patch Arena
 Real open-source contribution challenges where participants make actual contributions to open-source repositories.
 
-## Recent Updates
-- Fixed login "Failed to fetch" issue by implementing Vite proxy configuration
+## Recent Updates (October 3, 2025)
+- **CRITICAL FIX**: Added proxy configuration to Vite preview server for production deployment
+- **FIXED**: Flag submission endpoint now at `/api/challenges/{id}/submit` with proper authentication
+- **FIXED**: Leaderboard tie-breaker - users with equal scores ranked by earliest solve time
+- **FIXED**: Production database initialized with admin user and schema
 - Enhanced Admin dashboard with comprehensive challenge management
 - Added hints management UI with cost and time controls
 - Implemented visibility toggle for challenges
