@@ -128,9 +128,10 @@ The app uses Replit's VM deployment type. The deployment automatically:
 - Hot module reloading for fast development
 
 **Production:**
-- Single PHP server (port 5000) serves both static files and API
-- PHP router script handles routing between static files and API endpoints
-- Simplified deployment with single port exposure
+- PHP backend runs on port 3000 (internal, not exposed)
+- Vite preview server runs on port 5000 (exposed to internet)
+- Vite preview proxies `/api` requests to PHP backend
+- Production database automatically initialized on deployment
 
 ## Event Structure
 
@@ -141,9 +142,9 @@ Git-based puzzle solving challenges where participants navigate through cryptic 
 Real open-source contribution challenges where participants make actual contributions to open-source repositories.
 
 ## Recent Updates (October 3, 2025)
-- **CRITICAL FIX**: Single-server architecture - PHP serves both frontend and API on port 5000
+- **CRITICAL FIX**: Vite preview server with proxy configuration for production deployment
 - **CRITICAL FIX**: Automatic production database initialization on deployment
-- **CRITICAL FIX**: Created router.php to handle both static files and API endpoints
+- **CRITICAL FIX**: VM deployment type supporting multiple background processes
 - **FIXED**: Flag submission endpoint now at `/api/challenges/{id}/submit` with proper authentication
 - **FIXED**: Leaderboard tie-breaker - users with equal scores ranked by earliest solve time
 - **FIXED**: Production and development databases properly initialized
