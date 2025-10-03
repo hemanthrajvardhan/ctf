@@ -116,13 +116,21 @@ This starts both:
 - Vite dev server on port 5000 (frontend with proxy)
 
 **Production Deployment:**
-The app uses Replit's VM deployment type which supports running multiple background processes simultaneously. The deployment automatically:
+The app uses Replit's VM deployment type. The deployment automatically:
+- Builds the frontend static files
 - Initializes the production database with schema and admin user
-- Starts PHP backend on port 3000
-- Starts Vite preview server on port 5000 with proxy to backend
+- Starts PHP server on port 5000 serving both static frontend and API endpoints
 
-### Vite Proxy Configuration
-Vite is configured to proxy all `/api` requests to the PHP backend on port 3000 in both development and production, allowing seamless API communication without CORS issues.
+### Architecture
+
+**Development:**
+- Vite dev server (port 5000) proxies `/api` requests to PHP backend (port 3000)
+- Hot module reloading for fast development
+
+**Production:**
+- Single PHP server (port 5000) serves both static files and API
+- PHP router script handles routing between static files and API endpoints
+- Simplified deployment with single port exposure
 
 ## Event Structure
 
@@ -133,11 +141,13 @@ Git-based puzzle solving challenges where participants navigate through cryptic 
 Real open-source contribution challenges where participants make actual contributions to open-source repositories.
 
 ## Recent Updates (October 3, 2025)
-- **CRITICAL FIX**: Added automatic production database initialization on deployment
-- **CRITICAL FIX**: Added proxy configuration to Vite preview server for production deployment
+- **CRITICAL FIX**: Single-server architecture - PHP serves both frontend and API on port 5000
+- **CRITICAL FIX**: Automatic production database initialization on deployment
+- **CRITICAL FIX**: Created router.php to handle both static files and API endpoints
 - **FIXED**: Flag submission endpoint now at `/api/challenges/{id}/submit` with proper authentication
 - **FIXED**: Leaderboard tie-breaker - users with equal scores ranked by earliest solve time
-- **FIXED**: Separate production and development databases properly initialized
+- **FIXED**: Production and development databases properly initialized
+- **FIXED**: VM deployment type configured for production stability
 - Enhanced Admin dashboard with comprehensive challenge management
 - Added hints management UI with cost and time controls
 - Implemented visibility toggle for challenges
