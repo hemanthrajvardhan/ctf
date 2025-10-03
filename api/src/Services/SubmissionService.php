@@ -56,13 +56,14 @@ class SubmissionService
         $stmt = $this->db->query(
             "SELECT u.id, u.name, u.email, 
                     COUNT(DISTINCT CASE WHEN s.is_correct THEN s.challenge_id END) as solved_count,
-                    COALESCE(SUM(DISTINCT CASE WHEN s.is_correct THEN c.points END), 0) as total_points
+                    COALESCE(SUM(DISTINCT CASE WHEN s.is_correct THEN c.points END), 0) as total_points,
+                    MIN(CASE WHEN s.is_correct THEN s.submitted_at END) as first_solve_time
              FROM users u
              LEFT JOIN submissions s ON u.id = s.user_id
              LEFT JOIN challenges c ON s.challenge_id = c.id
              WHERE u.role = 'player'
              GROUP BY u.id, u.name, u.email
-             ORDER BY total_points DESC, solved_count DESC"
+             ORDER BY total_points DESC, first_solve_time ASC NULLS LAST"
         );
         return $stmt->fetchAll();
     }
