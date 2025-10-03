@@ -1,11 +1,19 @@
 -- Create enum for user roles
-CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+  END IF;
+END $$;
 
 -- Create enum for challenge categories
-CREATE TYPE public.challenge_category AS ENUM ('cryptography', 'cyber_security', 'programming', 'quiz', 'forensics', 'web', 'reverse_engineering', 'misc');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'challenge_category') THEN
+    CREATE TYPE public.challenge_category AS ENUM ('cryptography', 'cyber_security', 'programming', 'quiz', 'forensics', 'web', 'reverse_engineering', 'misc');
+  END IF;
+END $$;
 
 -- Create profiles table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -15,7 +23,7 @@ CREATE TABLE public.profiles (
 );
 
 -- Create user_roles table
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   role app_role NOT NULL,
@@ -23,7 +31,7 @@ CREATE TABLE public.user_roles (
 );
 
 -- Create challenges table
-CREATE TABLE public.challenges (
+CREATE TABLE IF NOT EXISTS public.challenges (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
@@ -40,7 +48,7 @@ CREATE TABLE public.challenges (
 );
 
 -- Create solves table
-CREATE TABLE public.solves (
+CREATE TABLE IF NOT EXISTS public.solves (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   challenge_id UUID REFERENCES public.challenges(id) ON DELETE CASCADE NOT NULL,
@@ -50,7 +58,7 @@ CREATE TABLE public.solves (
 );
 
 -- Create submissions table
-CREATE TABLE public.submissions (
+CREATE TABLE IF NOT EXISTS public.submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   challenge_id UUID REFERENCES public.challenges(id) ON DELETE CASCADE NOT NULL,
@@ -61,7 +69,7 @@ CREATE TABLE public.submissions (
 );
 
 -- Create rounds table
-CREATE TABLE public.rounds (
+CREATE TABLE IF NOT EXISTS public.rounds (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   start_time TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -93,13 +101,25 @@ AS $$
 $$;
 
 -- Profiles policies
-CREATE POLICY "Users can view all profiles"
-ON public.profiles FOR SELECT
-USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can view all profiles'
+  ) THEN
+    CREATE POLICY "Users can view all profiles"
+    ON public.profiles FOR SELECT
+    USING (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update own profile"
-ON public.profiles FOR UPDATE
-USING (auth.uid() = id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can update own profile'
+  ) THEN
+    CREATE POLICY "Users can update own profile"
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
+  END IF;
+END $$;
 
 -- User roles policies
 CREATE POLICY "Anyone can view roles"
@@ -190,14 +210,37 @@ END;
 $$;
 
 -- Trigger to create profile on signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Create indexes for better performance
-CREATE INDEX idx_challenges_category ON public.challenges(category);
-CREATE INDEX idx_challenges_visible ON public.challenges(visible_from, visible_to);
-CREATE INDEX idx_solves_user ON public.solves(user_id);
-CREATE INDEX idx_solves_challenge ON public.solves(challenge_id);
-CREATE INDEX idx_submissions_user ON public.submissions(user_id);
-CREATE INDEX idx_submissions_challenge ON public.submissions(challenge_id);
+CREATE INDEX IF NOT EXISTS idx_challenges_category ON public.challenges(category);
+CREATE INDEX IF NOT EXISTS idx_challenges_visible ON public.challenges(visible_from, visible_to);
+CREATE INDEX IF NOT EXISTS idx_solves_user ON public.solves(user_id);
+CREATE INDEX IF NOT EXISTS idx_solves_challenge ON public.solves(challenge_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_user ON public.submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_challenge ON public.submissions(challenge_id);
+
+-- Create helper function to promote user to admin
+CREATE OR REPLACE FUNCTION public.promote_to_admin(user_email TEXT)
+RETURNS VOID
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_uuid UUID;
+BEGIN
+  SELECT id INTO user_uuid FROM auth.users WHERE email = user_email;
+
+  IF user_uuid IS NULL THEN
+    RAISE EXCEPTION 'User with email % not found', user_email;
+  END IF;
+
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (user_uuid, 'admin')
+  ON CONFLICT (user_id, role) DO NOTHING;
+END;
+$$;

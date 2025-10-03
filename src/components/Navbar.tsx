@@ -1,39 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { useEffect, useState } from "react";
 import { LogOut, Shield, Trophy, User as UserIcon, Code2 } from "lucide-react";
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-}
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Navbar = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch('/api/session', {
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(data => {
-        setUser(data.user || null);
-      })
-      .catch(() => {
-        setUser(null);
-      });
-  }, []);
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      setUser(null);
+      await signOut();
       navigate('/auth');
     } catch (error) {
       console.error('Logout error:', error);
@@ -74,7 +50,7 @@ export const Navbar = () => {
                   Profile
                 </Button>
               </Link>
-              {user.role === 'admin' && (
+              {isAdmin && (
                 <Link to="/admin">
                   <Button variant="default" size="sm" className="gap-2 shadow-glow-moss" data-testid="nav-admin">
                     <Shield className="h-4 w-4" />
