@@ -125,10 +125,11 @@ Git-based puzzle solving challenges where participants navigate through cryptic 
 Real open-source contribution challenges where participants make actual contributions to open-source repositories.
 
 ## Recent Updates (October 3, 2025)
+- **CRITICAL FIX**: Added automatic production database initialization on deployment
 - **CRITICAL FIX**: Added proxy configuration to Vite preview server for production deployment
 - **FIXED**: Flag submission endpoint now at `/api/challenges/{id}/submit` with proper authentication
 - **FIXED**: Leaderboard tie-breaker - users with equal scores ranked by earliest solve time
-- **FIXED**: Production database initialized with admin user and schema
+- **FIXED**: Separate production and development databases properly initialized
 - Enhanced Admin dashboard with comprehensive challenge management
 - Added hints management UI with cost and time controls
 - Implemented visibility toggle for challenges
