@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { LogOut, Shield, Trophy, User as UserIcon, Code2 } from "lucide-react";
+import { LogOut, Shield, Trophy, User as UserIcon, Code as Code2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Navbar = () => {
