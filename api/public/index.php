@@ -204,6 +204,24 @@ $app->delete('/api/challenges/{id}', function ($request, $response, $args) use (
     return $response->withHeader('Content-Type', 'application/json');
 })->add(new AdminMiddleware())->add(new AuthMiddleware());
 
+$app->post('/api/challenges/{id}/submit', function ($request, $response, $args) use ($submissionService) {
+    $data = $request->getParsedBody();
+    $userId = $request->getAttribute('user_id');
+    
+    try {
+        $submission = $submissionService->submitFlag(
+            $userId,
+            $args['id'],
+            $data['flag']
+        );
+        $response->getBody()->write(json_encode($submission));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+    } catch (\Exception $e) {
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+})->add(new AuthMiddleware());
+
 $app->post('/api/submissions', function ($request, $response) use ($submissionService) {
     $data = $request->getParsedBody();
     $userId = $request->getAttribute('user_id');

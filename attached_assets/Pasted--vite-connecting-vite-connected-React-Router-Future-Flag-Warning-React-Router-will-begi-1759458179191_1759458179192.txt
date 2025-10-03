@@ -1,0 +1,29 @@
+[vite] connecting...
+[vite] connected.
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+Warning: validateDOMNesting(...): <div> cannot appear as a descendant of &lt;p&gt;.
+    at div
+    at Badge (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/src/components/ui/badge.tsx:37:18)
+    at p
+    at _c6 (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/src/components/ui/card.tsx:77:65)
+    at div
+    at div
+    at div
+    at _c2 (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/src/components/ui/card.tsx:41:60)
+    at div
+    at _c (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/src/components/ui/card.tsx:23:53)
+    at div
+    at div
+    at ChallengeDetail (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/src/pages/ChallengeDetail.tsx:34:22)
+    at RenderedRoute (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=9b98913d:4088:5)
+    at Routes (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=9b98913d:4558:5)
+    at Router (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=9b98913d:4501:15)
+    at BrowserRouter (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=9b98913d:5247:5)
+    at Provider (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/chunk-6RE2YWC4.js?v=9b98913d:32:15)
+    at TooltipProvider (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=9b98913d:58:5)
+    at QueryClientProvider (https://f75e2d43-a227-4709-947d-372ba17b499b-00-3msqpu1yfzmpa.worf.replit.dev/node_modules/.vite/deps/@tanstack_react-query.js?v=9b98913d:2934:3)
+    at App
+Submission error: 
+SyntaxError {message: "Failed to execute 'json' on 'Response': Unexpected token '<', "<!doctype "... is not valid JSON"}
+
