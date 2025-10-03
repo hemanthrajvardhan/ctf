@@ -142,13 +142,13 @@ Git-based puzzle solving challenges where participants navigate through cryptic 
 Real open-source contribution challenges where participants make actual contributions to open-source repositories.
 
 ## Recent Updates (October 3, 2025)
-- **CRITICAL FIX**: Vite preview server with proxy configuration for production deployment
-- **CRITICAL FIX**: Automatic production database initialization on deployment
-- **CRITICAL FIX**: VM deployment type supporting multiple background processes
-- **FIXED**: Flag submission endpoint now at `/api/challenges/{id}/submit` with proper authentication
+- **DEPLOYMENT READY**: Removed database initialization from deploy.sh - now runs once before deployment
+- **OPTIMIZED**: Deploy script manages both PHP backend (port 3000) and Vite preview (port 5000) properly
+- **FIXED**: Health check optimization - Vite preview responds immediately on port 5000
+- **FIXED**: Production database pre-initialized with admin user (admin@ctf.local / admin123)
+- **FIXED**: Flag submission endpoint at `/api/challenges/{id}/submit` with proper authentication
 - **FIXED**: Leaderboard tie-breaker - users with equal scores ranked by earliest solve time
-- **FIXED**: Production and development databases properly initialized
-- **FIXED**: VM deployment type configured for production stability
+- **FIXED**: VM deployment type configured for production with proper process management
 - Enhanced Admin dashboard with comprehensive challenge management
 - Added hints management UI with cost and time controls
 - Implemented visibility toggle for challenges
