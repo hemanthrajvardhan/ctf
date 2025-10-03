@@ -54,13 +54,20 @@ class SubmissionService
     public function getLeaderboard()
     {
         $stmt = $this->db->query(
-            "SELECT u.id, u.name, u.email, 
-                    COUNT(DISTINCT CASE WHEN s.is_correct THEN s.challenge_id END) as solved_count,
-                    COALESCE(SUM(DISTINCT CASE WHEN s.is_correct THEN c.points END), 0) as total_points,
-                    MIN(CASE WHEN s.is_correct THEN s.submitted_at END) as first_solve_time
+            "WITH user_solves AS (
+                SELECT DISTINCT s.user_id, s.challenge_id, c.points, 
+                       MIN(s.submitted_at) as solve_time
+                FROM submissions s
+                JOIN challenges c ON s.challenge_id = c.id
+                WHERE s.is_correct = true
+                GROUP BY s.user_id, s.challenge_id, c.points
+             )
+             SELECT u.id, u.name, u.email,
+                    COALESCE(COUNT(us.challenge_id), 0) as solved_count,
+                    COALESCE(SUM(us.points), 0) as total_points,
+                    MIN(us.solve_time) as first_solve_time
              FROM users u
-             LEFT JOIN submissions s ON u.id = s.user_id
-             LEFT JOIN challenges c ON s.challenge_id = c.id
+             LEFT JOIN user_solves us ON u.id = us.user_id
              WHERE u.role = 'player'
              GROUP BY u.id, u.name, u.email
              ORDER BY total_points DESC, first_solve_time ASC NULLS LAST"
